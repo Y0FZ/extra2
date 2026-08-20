@@ -3,8 +3,8 @@
 Programación IV — Universidad Latina de Costa Rica.
 
 > **Estudiante:** Yeremy Fernandez Alfaro
-> **Cédula:** _completar_
-> **Fecha de entrega:** _completar_
+> **Cédula:** 208460900
+> **Fecha de entrega:** 20/08/2026
 
 Aplicación web de demostración (Node.js + Express) usada para implementar y
 evidenciar los cuatro ejercicios prácticos del trabajo extraclase de CI/CD
@@ -46,39 +46,39 @@ pasando**, lint sin errores, cobertura ≈ 83%.
 
 ## 3. Pasos para dejar el repositorio 100% funcional en GitHub
 
-Estos son los pasos que faltan por hacer **desde tu cuenta de GitHub**
-(no se pueden automatizar desde aquí porque requieren tu autenticación):
+El proyecto ya está subido a `https://github.com/Y0FZ/extra2` (repo
+público). Verificado en vivo el 2026-08-19 vía la API de GitHub:
 
-1. **Subir este proyecto a tu repositorio**
-   (`https://github.com/Y0FZ/extra2`, actualmente vacío):
-   ```bash
-   cd extraclase-cicd
-   git init
-   git add .
-   git commit -m "Trabajo extraclase: CI/CD con GitHub Actions"
-   git branch -M main
-   git remote add origin https://github.com/Y0FZ/extra2.git
-   git push -u origin main
-   ```
-   Verificá antes que el repo sea **público** (`Settings → General →
-   Danger Zone → Change visibility`), ya que el enunciado lo exige.
+| Workflow | Último resultado |
+|---|---|
+| `CI Pipeline` | ✅ éxito |
+| `Test Matrix` | ✅ éxito |
+| `CD Pipeline` | ❌ falla en el job **Deploy to GitHub Pages** |
 
-2. **Habilitar GitHub Pages con origen "GitHub Actions"**:
+El job `build-artifact` de `cd.yml` genera el artefacto sin problema; el
+job `deploy` falla porque **GitHub Pages todavía no está habilitado** en
+el repositorio (la API responde `404 Not Found` para `/pages`). Además,
+el environment `production` ya existe pero **no tiene ninguna regla de
+protección configurada** (`protection_rules: []`), lo que le resta 2
+puntos al Ejercicio 2 según la rúbrica. Pasos pendientes, **solo
+posibles desde tu cuenta de GitHub autenticada**:
+
+1. **Habilitar GitHub Pages con origen "GitHub Actions"**:
    `Settings → Pages → Build and deployment → Source: GitHub Actions`.
-   Sin este paso, `cd.yml` fallará al intentar desplegar.
+   Sin este paso, `cd.yml` sigue fallando al desplegar. Luego re-ejecutá
+   el workflow `CD Pipeline` (pestaña Actions → CD Pipeline → Run
+   workflow, o hacé un nuevo push a `main`).
 
-3. **Crear el environment `production`** con una regla de protección
-   (requisito del Ejercicio 2):
-   `Settings → Environments → New environment → production`.
-   Ahí agregá al menos una regla, por ejemplo:
+2. **Agregar una regla de protección al environment `production`**:
+   `Settings → Environments → production`. Agregá al menos una:
    - *Required reviewers*: agregate a vos mismo como aprobador, o
    - *Wait timer*: por ejemplo 1 minuto.
 
-4. **(Opcional) Configurar branch protection en `main`**:
+3. **(Opcional) Configurar branch protection en `main`**:
    `Settings → Branches → Add rule` → exigir pull request y que el
    check `CI Pipeline` pase antes de fusionar.
 
-5. **(Opcional) Secrets para notificaciones**: si querés activar las
+4. **(Opcional) Secrets para notificaciones**: si querés activar las
    notificaciones a Slack/Discord (pasos ya incluidos y condicionados en
    los workflows), agregá en
    `Settings → Secrets and variables → Actions`:
@@ -88,10 +88,11 @@ Estos son los pasos que faltan por hacer **desde tu cuenta de GitHub**
    Si no los configurás, esos pasos simplemente se omiten — el pipeline
    no falla.
 
-6. **Crear una rama `develop`** (aunque sea vacía/igual a main) para que
-   el disparador `push` a `develop` del CI tenga sentido, y hacé al menos
-   un pull request de una rama feature hacia `main` para evidenciar el
-   trigger de `pull_request`.
+5. **Crear una rama `develop`** (aunque sea vacía/igual a main) — todavía
+   no existe en el repositorio (solo `main`) — para que el disparador
+   `push` a `develop` del CI tenga sentido, y hacé al menos un pull
+   request de una rama feature hacia `main` para evidenciar el trigger
+   de `pull_request`.
 
 ## 4. Qué dispara cada workflow
 
