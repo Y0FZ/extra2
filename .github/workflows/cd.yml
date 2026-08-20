@@ -1,0 +1,80 @@
+name: CD Pipeline
+
+# Ejercicio 2: Pipeline de Entrega/Despliegue Continuo
+# Se dispara automaticamente cuando el workflow "CI Pipeline" (ci.yml)
+# se completa exitosamente sobre la rama main.
+on:
+  workflow_run:
+    workflows: ['CI Pipeline']
+    types: [completed]
+    branches: [main]
+  # Permite tambien disparar el despliegue manualmente desde la pestana Actions.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: 'pages'
+  cancel-in-progress: false
+
+jobs:
+  build-artifact:
+    name: Build deployable artifact
+    runs-on: ubuntu-latest
+    # Solo continua si el CI que disparo este workflow_run fue exitoso
+    # (o si se ejecuto manualmente via workflow_dispatch).
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests before building (safety gate)
+        run: npm test
+
+      - name: Build static deployable artifact
+        run: npm run build
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build-artifact
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ steps.deployment.outputs.page_url }}
+    env:
+      DEPLOY_NOTIFY_WEBHOOK: ${{ secrets.DEPLOY_NOTIFY_WEBHOOK }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Print deployed URL
+        run: echo "Sitio desplegado en ${{ steps.deployment.outputs.page_url }}"
+
+      # Ejemplo de uso de un GitHub Secret para notificar el despliegue.
+      # Se configura opcionalmente en Settings > Secrets and variables > Actions.
+      - name: Notify deployment (optional)
+        if: always() && env.DEPLOY_NOTIFY_WEBHOOK != ''
+        run: |
+          curl -s -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"Despliegue a produccion completado: ${{ steps.deployment.outputs.page_url }}\"}" \
+            "$DEPLOY_NOTIFY_WEBHOOK"

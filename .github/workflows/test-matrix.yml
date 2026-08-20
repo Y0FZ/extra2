@@ -1,0 +1,60 @@
+name: Test Matrix
+
+# Ejercicio 3: Workflow avanzado con matrix strategy.
+# Ejecuta las pruebas unitarias en multiples versiones de Node.js
+# combinadas con multiples sistemas operativos, en paralelo.
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test (Node ${{ matrix.node-version }} on ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [18, 20, 22]
+        os: [ubuntu-latest, windows-latest]
+        # 'exclude' de ejemplo: Node 18 en Windows no se prueba porque
+        # esa combinacion ya no es soportada en el entorno del proyecto.
+        exclude:
+          - node-version: 18
+            os: windows-latest
+        # 'include' de ejemplo: se agrega una combinacion adicional en
+        # macOS solo para la version LTS mas reciente.
+        include:
+          - node-version: 22
+            os: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Report matrix result to summary
+        if: always()
+        shell: bash
+        run: |
+          echo "- Node ${{ matrix.node-version }} / ${{ matrix.os }}: \
+          ${{ job.status }}" >> "$GITHUB_STEP_SUMMARY"
