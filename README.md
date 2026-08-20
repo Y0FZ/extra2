@@ -44,41 +44,27 @@ npm start                # Levanta el servidor en http://localhost:3000
 Resultado local verificado antes de subir el proyecto: **23 pruebas
 pasando**, lint sin errores, cobertura ≈ 83%.
 
-## 3. Pasos para dejar el repositorio 100% funcional en GitHub
+## 3. Estado del repositorio en GitHub
 
-El proyecto ya está subido a `https://github.com/Y0FZ/extra2` (repo
-público). Verificado en vivo el 2026-08-19 vía la API de GitHub:
+El proyecto está en `https://github.com/Y0FZ/extra2` (repo público).
+Verificado en vivo vía la API de GitHub el 2026-08-20:
 
 | Workflow | Último resultado |
 |---|---|
-| `CI Pipeline` | ✅ éxito |
+| `CI Pipeline` | ✅ éxito (en `main` y en `develop`) |
 | `Test Matrix` | ✅ éxito |
-| `CD Pipeline` | ❌ falla en el job **Deploy to GitHub Pages** |
+| `CD Pipeline` | ✅ éxito — sitio publicado en GitHub Pages |
 
-El job `build-artifact` de `cd.yml` genera el artefacto sin problema; el
-job `deploy` falla porque **GitHub Pages todavía no está habilitado** en
-el repositorio (la API responde `404 Not Found` para `/pages`). Además,
-el environment `production` ya existe pero **no tiene ninguna regla de
-protección configurada** (`protection_rules: []`), lo que le resta 2
-puntos al Ejercicio 2 según la rúbrica. Pasos pendientes, **solo
-posibles desde tu cuenta de GitHub autenticada**:
+GitHub Pages ya está habilitado (`Source: GitHub Actions`) y el
+environment `production` tiene dos reglas de protección activas:
+*required reviewers* y un *wait timer* de 1 minuto. Ya existe también la
+rama `develop`. Pendiente opcional:
 
-1. **Habilitar GitHub Pages con origen "GitHub Actions"**:
-   `Settings → Pages → Build and deployment → Source: GitHub Actions`.
-   Sin este paso, `cd.yml` sigue fallando al desplegar. Luego re-ejecutá
-   el workflow `CD Pipeline` (pestaña Actions → CD Pipeline → Run
-   workflow, o hacé un nuevo push a `main`).
-
-2. **Agregar una regla de protección al environment `production`**:
-   `Settings → Environments → production`. Agregá al menos una:
-   - *Required reviewers*: agregate a vos mismo como aprobador, o
-   - *Wait timer*: por ejemplo 1 minuto.
-
-3. **(Opcional) Configurar branch protection en `main`**:
+1. **(Opcional) Configurar branch protection en `main`**:
    `Settings → Branches → Add rule` → exigir pull request y que el
    check `CI Pipeline` pase antes de fusionar.
 
-4. **(Opcional) Secrets para notificaciones**: si querés activar las
+2. **(Opcional) Secrets para notificaciones**: si querés activar las
    notificaciones a Slack/Discord (pasos ya incluidos y condicionados en
    los workflows), agregá en
    `Settings → Secrets and variables → Actions`:
@@ -88,12 +74,6 @@ posibles desde tu cuenta de GitHub autenticada**:
    Si no los configurás, esos pasos simplemente se omiten — el pipeline
    no falla.
 
-5. **Crear una rama `develop`** (aunque sea vacía/igual a main) — todavía
-   no existe en el repositorio (solo `main`) — para que el disparador
-   `push` a `develop` del CI tenga sentido, y hacé al menos un pull
-   request de una rama feature hacia `main` para evidenciar el trigger
-   de `pull_request`.
-
 ## 4. Qué dispara cada workflow
 
 | Workflow | Disparador | Qué hace |
@@ -102,13 +82,9 @@ posibles desde tu cuenta de GitHub autenticada**:
 | `cd.yml` | al completarse `ci.yml` exitosamente en `main` (o manual) | build del artefacto estático, despliegue a GitHub Pages con environment `production` |
 | `test-matrix.yml` | push/PR (igual que CI) o manual | corre las pruebas en Node 18/20/22 combinado con Ubuntu/Windows (+ macOS incluido), `fail-fast: false` |
 
-Después del primer push exitoso a `main`, la URL del sitio desplegado
-aparecerá en la pestaña **Actions → CD Pipeline → deploy → environment
-production**, y también en `Settings → Pages`. Documentá esa URL aquí:
-
-> **URL desplegada:** `https://y0fz.github.io/extra2/` (se activa
-> automáticamente tras el primer despliegue exitoso de `cd.yml`; confirmá
-> el valor exacto en `Settings → Pages` una vez desplegado).
+> **URL desplegada:** https://y0fz.github.io/extra2/ — confirmada en
+> línea (HTTP 200), publicada automáticamente por `cd.yml` a través del
+> environment `production`.
 
 ## 5. Evidencia requerida (capturas de pantalla)
 
